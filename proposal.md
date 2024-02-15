@@ -19,3 +19,9 @@ What might draw some attention is the pregnant women and children group. The rea
 
 ### Research Questions
 Dan is an epidemiologist that works for WHO and who wants to better understand the distribution of HIV statistics in South Africa compared to Western Europe. He knows that there is a massive discrepancy in care offered in the Western regions of the world compared the Southern regions and he wants to start an initiative to allocate more resources and support for undercared regions. He wants to explore the most up-to-date data set that includes various statistics on a wide range of individuals, from infants to adults, in each sector of the globe. Dan can utilize our dashboard app and select for countries with high quality HIV care and treatment, such as Germany, France, and the UK. He can also select for South Africa, Lesotho, and Eswatini, for example, to compare to. Say Dan is particularly interested in young people living with or at risk for HIV/AIDS, so we can choose statistics such as "Per cent of young people (aged 15-24 years) with comprehensive, correct knowledge of HIV" and "Per cent of young people (aged 15-24 years) who have ever been tested for HIV and received the result of the last test". He can refer to these visualization to build his argument or proposal to fund more support for South African regions to his peers or supervisors. By also highlighting the western European countries, he can introduce the stark contrast of the availability of care discrepancy to further his case. 
+
+### Sketch
+
+Here is a link to the PDF containing the app sketch.
+
+[Link to PDF](https://github.com/shaytran/HIV-Dash/blob/main/Sketch.pdf)
