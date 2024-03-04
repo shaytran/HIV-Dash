@@ -4,6 +4,8 @@ HIV/AIDS is a notorious disease that impacts not only the health of infected ind
 
 The HIV dash contains 3 separate tabs that will allow users to extract comprehensive insights about the HIV dataset with 17 indicators (e.g. Estimated mortality rate, estimated infection rate, mother-to-child transmission rate).
 
+[**HEROKU deployment**](https://hiv-dash-8ad3dffed17f.herokuapp.com/)
+
 ## Tab 1
 
 Since the dataset covers the period from 2000 to 2022 for numerous countries, the first tab will allow users to visualize the trend of an indicator of choice across up to 4 countries. The resulting plot will show a line graph with each country represented by different colour, and a slider bar at the x-axis that will allow users to expand or limit the range of the years.
