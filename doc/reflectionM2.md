@@ -14,4 +14,14 @@ Some limitations related to `Tab 2` at the moment are that the zoom in feature o
 
 Outside the limitations, some future improvements that can be made would be to decide whether Viridis is the appropriate color scale for the indicator color circle, check if there are any additional interactive features that can add useful information to the end users, and create a better design of the user interface.   
 
+### Tab 3
 
+Tab 3 is called **HIV Summary Statistics** and it returns a table of up to 10 selected countries for a given indicator. It also allows the user to select a year or a range of years and will return common summary statistics like min max, mean, and the count of null values for that indicator. The current capabilities are that as you increase the number of countries, the table presented will grow. However, for visual purposes, a limitation has been set to only display up to 10 countries. I decided to put this measure in place for ease of reading and general comparison purposes. Currently, the table is also sorted alphabetically and will keep growing in descending alphabeletical order. It is fairly straightforward to use, and just provides a quick light-weight ability to compare and contrast different countries in a more numerical fashion.
+
+The current limitations are that depending on the specific combinations of indicator, country, and selection of year range, we can end up into situations where there is simply no data available from our data set, and thus, the table will appear empty. Perhaps, it may be better to show these as NA or NULL if no data is available. Additionally, I think that although the set-up 'works', there are still some improvements that could be made with respect to design. The table is a bit bland, it may be worthwhile exploring other color schemes for the table but to ensure that we are not too distracting from the overall messages. 
+
+Other improvements may include: adding alternative means of sortings, and additional summary statistics. With respect to sorting, it currently only sorts alphabetically, but it may also be worth exploring sorting by other columns either in desc or asc order. For summary statistics, it is also worth looking into other statistics that help give more information on the countries.
+
+### Conclusions
+
+Overall, our project is well underway. What we have done here is to sketch out generally what the app will look like and its initial deployment. We will continue to reiterate over the design and development process and take into consideration feedback from instructors, TAs, and peers to further improve our project. We hope you enjoyed our initial deployment of our app!
