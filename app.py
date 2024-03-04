@@ -1,11 +1,10 @@
 import pandas as pd
-import numpy as np
 from dash import Dash, html, dcc, Input, Output, dash_table, ctx
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import altair as alt
 
-df_aggregated = pd.read_csv("~/Library/CloudStorage/OneDrive-UBC/HIV-Dash/data/processed/dash_clean.csv", index_col=0, low_memory=False)
+df_aggregated = pd.read_csv("data/processed/dash_clean.csv", index_col=0, low_memory=False)
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.layout = dbc.Container([
