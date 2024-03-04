@@ -7,6 +7,9 @@ import altair as alt
 df_aggregated = pd.read_csv("data/processed/dash_clean.csv", index_col=0, low_memory=False)
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+
+server = app.server
+
 app.layout = dbc.Container([
     html.H1("HIV Indicator Dashboard", style={"textAlign": "center"}),
     dcc.Tabs(id='tabs', children=[
