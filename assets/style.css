@@ -1,16 +1,20 @@
-/* assets/style.css */
-body {
-    background-color: palepink;
+/* Custom styles for Dash tabs using SUPERHERO theme */
+.tab-content {
+    background-color: #2B3E50; /* Background of the tab content */
 }
 
-h1 {
-    color: burgundy;
-    text-align: center;
+.nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+    color: #fff;
+    background-color: #007BFF; /* Active tab background color */
+    border-color: #007BFF;
 }
 
-img.center {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    width: 50%; /* You can adjust this as needed */
+.nav-tabs .nav-link {
+    color: #DDD; /* Inactive tab text color */
+    background-color: #333; /* Inactive tab background color */
+    border-color: #454d55;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: #007BFF;
 }
