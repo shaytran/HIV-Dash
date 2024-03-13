@@ -3,6 +3,7 @@ from dash import Dash, html, dcc, Input, Output, dash_table, ctx
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import altair as alt
+import json
 
 df_aggregated = pd.read_csv("data/processed/dash_clean.csv", index_col=0, low_memory=False)
 
@@ -11,12 +12,15 @@ app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
 app.layout = dbc.Container([
-    html.H1("HIV Indicator Dashboard", style={"textAlign": "center"}),
-    dcc.Tabs(id='tabs', children=[
+    html.H1("HIV Indicator Dashboard", style={"textAlign": "center", "color": "burgundy"}),
+    html.Img(src="https://cdn.storymd.com/optimized/RqVLDEsxom/thumbnail.gif", className="center", style={"display": "block", "margin-left": "auto", "margin-right": "auto", "width": "10%"}),
+    html.P("HIV (Human Immunodeficiency Virus) attacks the immune system and can lead to AIDS (Acquired Immunodeficiency Syndrome), a condition where the immune system is severely damaged. First identified in the early 1980s in the USA, HIV/AIDS has since become a global public health issue, with approximately 39 million people living with the virus worldwide as of 2022. Despite significant advancements, there is no cure for HIV/AIDS, highlighting the importance of continued efforts in prevention, treatment, and care.", style={"textAlign": "center", "color": "burgundy"}),
+    dcc.Tabs(id='tabs', style={"color": "burgundy"}, children=[
         ### First tab
         dcc.Tab([ 
             html.H2('HIV Indicator Trends by Country and Year'),
-            html.P('Select an indicator and up to 4 countries to compare their trends over time.'),
+            html.P('Select an HIV indicator and up to 4 countries to compare their trends over time. You can toggle the year range using the sliding bar.'),
+            html.Div(id='missing-data-warning', style={'textAlign': 'center', 'color': 'red'}),
             dbc.Row([
                 dbc.Col([
                     dcc.Dropdown(
@@ -102,36 +106,48 @@ app.layout = dbc.Container([
             ])
         ], label='Indicator Summary Statistics')
     ])    
-])
+], style={'backgroundColor': '#FFFFFF', "color": "#2F3C48"})
 
 # Callback for updating the chart based on selections
 @app.callback(
-    Output('trend-chart', 'srcDoc'),
+    [Output('trend-chart', 'srcDoc'), Output('missing-data-warning', 'children')],
     [Input('indicator-dropdown', 'value'),
      Input('country-dropdown', 'value'),
      Input('year-slider', 'value')]
 )
 def update_chart(selected_indicator, selected_countries, selected_years):
     if selected_countries is None or selected_indicator is None or len(selected_countries) > 4:
-        return 'Please select an indicator and up to 4 countries.'
+        return 'Please select an indicator and up to 4 countries.', None
 
     # Filter based on the selected years and countries
     chart_df = df_aggregated[df_aggregated['Time period'].between(*selected_years)]
     chart_df = chart_df[chart_df['Geographic area'].isin(selected_countries)]
     
-    # Create the Altair chart
-    base = alt.Chart(chart_df).encode(
-        x=alt.X('Time period:O', axis=alt.Axis(title='Year')),
-        y=alt.Y(f"{selected_indicator}:Q", axis=alt.Axis(title=selected_indicator)),
-        color='Geographic area:N'
-    )
+    # Check for missing data
+    missing_countries = [country for country in selected_countries if country not in chart_df['Geographic area'].unique()]
+    if not chart_df.empty and missing_countries:
+        # Prepare a message about missing data
+        missing_message = f"There is missing data for the following countries: {', '.join(missing_countries)}"
+        return None, missing_message
     
-    line_chart = base.mark_line(point=True).properties(
-        width=700,
-        height=400
-    )
+    elif chart_df.empty:
+        # Handle the case where the filtered DataFrame is empty
+        return "No data available for the selected criteria.", None
     
-    return line_chart.to_html()
+    else:
+        # Proceed to create the chart as normal if there is no missing data
+        base = alt.Chart(chart_df).encode(
+            x=alt.X('Time period:O', axis=alt.Axis(title='Year')),
+            y=alt.Y(f"{selected_indicator}:Q", axis=alt.Axis(title=selected_indicator)),
+            color='Geographic area:N'
+        )
+
+        line_chart = base.mark_line(point=True).properties(
+            width=700,
+            height=400
+        )
+        
+        return line_chart.to_html(), None
 
 # Callback for updating the map based on dropdown and slider values
 @app.callback(
