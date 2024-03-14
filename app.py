@@ -13,13 +13,12 @@ server = app.server
 
 app.layout = dbc.Container([
     html.H1("HIV Indicator Dashboard", style={"textAlign": "center", "color": "burgundy"}),
-    html.Img(src="https://cdn.storymd.com/optimized/RqVLDEsxom/thumbnail.gif", className="center", style={"display": "block", "margin-left": "auto", "margin-right": "auto", "width": "10%"}),
+    html.Img(src="https://cdn.storymd.com/optimized/RqVLDEsxom/thumbnail.gif", style={"display": "block", "margin-left": "auto", "margin-right": "auto", "width": "10%"}),
     html.P("HIV (Human Immunodeficiency Virus) attacks the immune system and can lead to AIDS (Acquired Immunodeficiency Syndrome), a condition where the immune system is severely damaged. First identified in the early 1980s in the USA, HIV/AIDS has since become a global public health issue, with approximately 39 million people living with the virus worldwide as of 2022. Despite significant advancements, there is no cure for HIV/AIDS, highlighting the importance of continued efforts in prevention, treatment, and care.", style={"textAlign": "center", "color": "burgundy"}),
-    dcc.Tabs(id='tabs', style={"color": "burgundy"}, children=[
-        ### First tab
-        dcc.Tab([ 
-            html.H2('HIV Indicator Trends by Country and Year'),
-            html.P('Select an HIV indicator and up to 4 countries to compare their trends over time. You can toggle the year range using the sliding bar.'),
+    dcc.Tabs(id='tabs', children=[
+        dcc.Tab(label='Indicator Trend', children=[
+            html.H2('HIV Indicator Trends by Country and Year', style={"textAlign": "center"}),
+            html.P('Select an HIV indicator and up to 4 countries to compare their trends over time. You can toggle the year range using the sliding bar.', style={"textAlign": "center"}),
             html.Div(id='missing-data-warning', style={'textAlign': 'center', 'color': 'red'}),
             dbc.Row([
                 dbc.Col([
@@ -27,26 +26,28 @@ app.layout = dbc.Container([
                         id='indicator-dropdown',
                         value=df_aggregated.columns[3],  # Default value is the first indicator column
                         options=[{'label': col, 'value': col} for col in df_aggregated.columns[3:]], 
-                        placeholder='Choose 1 indicator...'),
+                        placeholder='Choose 1 indicator...'
+                    ),
                     dcc.Dropdown(
                         id='country-dropdown',
                         options=[{'label': country, 'value': country} for country in df_aggregated['Geographic area'].unique()],
                         placeholder='Choose up to 4 countries...',
-                        multi=True)  # Allow multiple selections
-                ]),
+                        multi=True
+                    ),
+                    html.Div([
+                        dcc.RangeSlider(
+                            id='year-slider',
+                            min=df_aggregated['Time period'].min(),
+                            max=df_aggregated['Time period'].max(),
+                            marks={str(year): str(year) for year in range(df_aggregated['Time period'].min(), df_aggregated['Time period'].max() + 1)},
+                            step=1,
+                            value=[df_aggregated['Time period'].min(), df_aggregated['Time period'].max()]
+                        )
+                    ], style={'marginTop': 20})
+                ])
             ]),
-            dbc.Row([
-                html.Iframe(id='trend-chart', style={'border-width': '0', 'width': '100%', 'height': '400px'}),
-                dcc.RangeSlider(
-                        id='year-slider',
-                        min=df_aggregated['Time period'].min(),
-                        max=df_aggregated['Time period'].max(),
-                        marks={str(year): str(year) for year in range(df_aggregated['Time period'].min(), df_aggregated['Time period'].max() + 1)},
-                        step=1,
-                        value=[df_aggregated['Time period'].min(), df_aggregated['Time period'].max()]
-                )
-            ])
-        ], label='Indicator Trend'),
+            html.Div(id='trend-chart')
+        ]),
         ### Second tab
         dcc.Tab([
             html.H2("HIV Indicator map"),
@@ -110,44 +111,39 @@ app.layout = dbc.Container([
 
 # Callback for updating the chart based on selections
 @app.callback(
-    [Output('trend-chart', 'srcDoc'), Output('missing-data-warning', 'children')],
+    [Output('trend-chart', 'children'), Output('missing-data-warning', 'children')],
     [Input('indicator-dropdown', 'value'),
      Input('country-dropdown', 'value'),
      Input('year-slider', 'value')]
 )
 def update_chart(selected_indicator, selected_countries, selected_years):
     if selected_countries is None or selected_indicator is None or len(selected_countries) > 4:
-        return 'Please select an indicator and up to 4 countries.', None
+        return [html.Div('Please select an indicator and up to 4 countries.')], None
 
-    # Filter based on the selected years and countries
-    chart_df = df_aggregated[df_aggregated['Time period'].between(*selected_years)]
-    chart_df = chart_df[chart_df['Geographic area'].isin(selected_countries)]
-    
-    # Check for missing data
+    chart_df = df_aggregated[(df_aggregated['Time period'].between(selected_years[0], selected_years[1])) & (df_aggregated['Geographic area'].isin(selected_countries))]
+
+    if chart_df.empty:
+        return [html.Div()], 'No data available for the selected criteria.'
+
     missing_countries = [country for country in selected_countries if country not in chart_df['Geographic area'].unique()]
-    if not chart_df.empty and missing_countries:
-        # Prepare a message about missing data
-        missing_message = f"There is missing data for the following countries: {', '.join(missing_countries)}"
-        return None, missing_message
-    
-    elif chart_df.empty:
-        # Handle the case where the filtered DataFrame is empty
-        return "No data available for the selected criteria.", None
-    
-    else:
-        # Proceed to create the chart as normal if there is no missing data
-        base = alt.Chart(chart_df).encode(
-            x=alt.X('Time period:O', axis=alt.Axis(title='Year')),
-            y=alt.Y(f"{selected_indicator}:Q", axis=alt.Axis(title=selected_indicator)),
-            color='Geographic area:N'
-        )
+    warning_msg = None
+    if missing_countries:
+        warning_msg = f"Missing data for countries: {', '.join(missing_countries)}"
 
-        line_chart = base.mark_line(point=True).properties(
-            width=700,
-            height=400
-        )
-        
-        return line_chart.to_html(), None
+    # Creating a line chart using Plotly
+    fig = px.line(chart_df, x="Time period", y=selected_indicator, color='Geographic area', title=f"Trend of {selected_indicator}", labels={"Time period": "Year"})
+    
+    # Update the layout to remove y-axis title
+    fig.update_layout(
+        yaxis_title="",
+        margin=dict(l=100, r=100, t=100, b=100),  
+        width=1200,  
+        height=600,  
+        transition_duration=500
+    )
+
+
+    return [dcc.Graph(figure=fig)], warning_msg
 
 # Callback for updating the map based on dropdown and slider values
 @app.callback(
