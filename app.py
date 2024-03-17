@@ -1,18 +1,97 @@
 import pandas as pd
-from dash import Dash, html, dcc, Input, Output, dash_table, ctx
+from dash import Dash, html, dcc, Input, Output, dash_table, State, clientside_callback, ClientsideFunction
 import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
+from dash_iconify import DashIconify
 import plotly.express as px
+import plotly.graph_objects as go
 import altair as alt
 import json
 
 df_aggregated = pd.read_csv("data/processed/dash_clean.csv", index_col=0, low_memory=False)
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
-
 server = app.server
 
+## Add dataset and github icon
+def modal_data_source():
+    return dmc.Modal(
+            id='modal-data-source',
+            size='55%',
+            styles={
+                'modal': {
+                    'background-color': '#f2f2f2',
+                }
+            },
+            children=[
+                dcc.Markdown(
+                    [
+                        """
+                        
+                        # About the Dataset
+                        
+                        HIV (Human Immunodeficiency Virus) is a well-known virus that attacks the immune system of infected individuals. 
+                        HIV gained immense awareness in the early 1980s, particularly in the USA, and it is responsible for AIDS (Acquired Immunodeficiency Syndrome), 
+                        which is a stage of HIV infection where the immune system is severely damaged. As of 2022, 
+                        there were approximately 39 million people globally that are living with HIV/AIDS, which has no known cure so far. 
+                        HIV/AIDS remains a global public health issue, with ongoing efforts to increase access to prevention, treatment, and care.
+
+                        This dataset contains 12 indicators. These indicators can be categorized into two main groups:
+
+                        1. General rates (ie. rate of annual AIDS-related deaths, incidence rate, mother-to-child transmission rate)
+                        2. Statistics on pregnant women and children (ie. number of children receiving ART, percent of pregnant women living with HIV within 2 months of birth, 
+                           estimated children who have lost one or both parents due to AIDS)
+
+                        ## Source Information
+                        
+                        - **Title:** "Key HIV epidemiology indicators for children and adolescents aged 0-19, 2000-2022"
+                        - **Published Online:** data.unicef.org
+                        - **Retrieved From:** [UNICEF](https://data.unicef.org/resources/dataset/hiv-aids-statistical-tables/)
+                        - **Temporal Coverage:** From 01/01/2000 to 12/31/2022
+                        - **Geospatial Coverage:** Worldwide
+                        
+                        ## Collection Methodology
+                        
+                        The data was collected by visiting the publisher.
+                        
+                        """
+                    ],
+                )
+            ]
+        )
+
 app.layout = dbc.Container([
-    html.H1("HIV Indicator Dashboard", style={"textAlign": "center", "color": "burgundy"}),
+    dbc.Row([
+        dbc.Col(
+            html.Div([
+                html.H1("HIV Indicator Dashboard", style={"color": "burgundy"}),
+                dmc.Grid(
+                    [
+                        modal_data_source(),
+                        dmc.Col(
+                            dmc.Group(
+                                [
+                                    dmc.ActionIcon(
+                                        [DashIconify(icon='bx:data', color='#C8C8C8', width=25)],
+                                        variant='transparent',
+                                        id='about-data-source'
+                                    ),
+                                    dmc.Anchor(
+                                        [DashIconify(icon='uil:github', color='#8d8d8d', width=30)],
+                                        href='https://github.com/shaytran/HIV-Dash'
+                                    )
+                                ],
+                                spacing='xl',
+                                position='center'
+                            ),
+                        )
+                    ],
+                    justify="center"
+                )
+            ], style={"textAlign": "center"}),
+            width={"size": 12, "offset": 0}
+        )
+    ], align="center", style={"margin-bottom": "20px"}),
     html.Img(src="https://cdn.storymd.com/optimized/RqVLDEsxom/thumbnail.gif", style={"display": "block", "margin-left": "auto", "margin-right": "auto", "width": "10%"}),
     html.P("HIV (Human Immunodeficiency Virus) attacks the immune system and can lead to AIDS (Acquired Immunodeficiency Syndrome), a condition where the immune system is severely damaged. First identified in the early 1980s in the USA, HIV/AIDS has since become a global public health issue, with approximately 39 million people living with the virus worldwide as of 2022. Despite significant advancements, there is no cure for HIV/AIDS, highlighting the importance of continued efforts in prevention, treatment, and care.", style={"textAlign": "center", "color": "burgundy"}),
     dcc.Tabs(id='tabs', children=[
@@ -50,30 +129,21 @@ app.layout = dbc.Container([
         ]),
         ### Second tab
         dcc.Tab([
-            html.H2("HIV Indicator map"),
-                dbc.Row([
+            html.H2("HIV Indicator map", style={"textAlign": "center"}),
+            dbc.Row([
                 # Dropdown for selecting indicator
-                    dcc.Dropdown(
-                        id='indicator-map-dropdown',
-                        # Limiting the usage of indicator columns to avoid errors since some of them are in non-numeric type at the moment
-                        options=[{'label': col, 'value': col} for col in df_aggregated.columns[3:]],
-                        value=df_aggregated.columns[3],  # Initial indicator
-                        multi=False,
+                dcc.Dropdown(
+                    id='indicator-map-dropdown',
+                    # Limiting the usage of indicator columns to avoid errors since some of them are in non-numeric type at the moment
+                    options=[{'label': col, 'value': col} for col in df_aggregated.columns[3:]],
+                    value=df_aggregated.columns[3],  # Initial indicator
+                    multi=False,
                 )]),
-                dbc.Row([
-                    # Map
-                    dcc.Graph(id='world-map'),
-                    # Slider for selecting year
-                    dcc.Slider(
-                        id='year-map-slider',
-                        min=df_aggregated['Time period'].min(),
-                        max=df_aggregated['Time period'].max(),
-                        value=df_aggregated['Time period'].max(),  # Set default displayed year as 2022
-                        marks={str(year): str(year) for year in df_aggregated['Time period'].unique()},
-                        step=1,
-                )])],
-            label='Indicator Map'    
-        ),
+            dbc.Row([
+                # Map
+                dbc.Col(dcc.Graph(id='world-map'))
+            ])   
+        ], label='Indicator Map'),
         ### Third tab
         dcc.Tab([
             html.H2('Indicator Summary Statistics'),
@@ -108,6 +178,15 @@ app.layout = dbc.Container([
         ], label='Indicator Summary Statistics')
     ])    
 ], style={'backgroundColor': '#FFFFFF', "color": "#2F3C48"})
+
+## Callback for the dataset and github icons
+clientside_callback(
+    ClientsideFunction(namespace='clientside', function_name='toggle_modal_data_source'),
+    Output('modal-data-source', 'opened'),
+    Input('about-data-source', 'n_clicks'),
+    State('modal-data-source', 'opened'),
+    prevent_initial_call=True
+)
 
 # Callback for updating the chart based on selections
 @app.callback(
@@ -148,19 +227,20 @@ def update_chart(selected_indicator, selected_countries, selected_years):
 # Callback for updating the map based on dropdown and slider values
 @app.callback(
     Output('world-map', 'figure'),
-    [Input('indicator-map-dropdown', 'value'),
-     Input('year-map-slider', 'value')]
+    Input('indicator-map-dropdown', 'value')
 )
-def update_map(selected_indicator, selected_year):
-    filtered_data = df_aggregated[(df_aggregated['Time period'] == selected_year)]
-    fig = px.scatter_geo(
-        filtered_data,
+
+def update_figures(selected_indicator):
+    fig_map = px.scatter_geo(
+        df_aggregated,
         locations='Geographic area',
         locationmode='country names',
         color=selected_indicator,
+        color_continuous_scale=px.colors.cyclical.IceFire,
         hover_name='Geographic area',
         # Limit the information to display on the hover box
-        hover_data={'Geographic area':False,
+        hover_data={'Time period':False,
+                    'Geographic area':False,
                     'Estimated rate of annual AIDS-related deaths (per 100,000 population)':False,
                     'Estimated incidence rate (new HIV infection per 1,000 uninfected population)':False,
                     'Reported number of children (aged 0-14 years) receiving antiretroviral treatment (ART)':False,
@@ -173,24 +253,41 @@ def update_map(selected_indicator, selected_year):
                     'Per cent of pregnant women living with HIV receiving effective ARVs for PMTCT (excludes single-dose nevirapine)':False,
                     'Reported number of pregnant woment living with HIV receiving anitretroviral treatments (ARVs) for prevention of mother to child transmission programmes (PMTCT)':False,
                     'Mother-to-child HIV transmission rate':False},
-        labels={'size': 'Value'},
-        size=filtered_data[selected_indicator].fillna(0),
+        labels={'size': 'Value',
+                'Estimated rate of annual AIDS-related deaths (per 100,000 population)': "Estimated rate",
+                'Estimated incidence rate (new HIV infection per 1,000 uninfected population)': "Estimated rate",
+                'Reported number of children (aged 0-14 years) receiving antiretroviral treatment (ART)': "Reported number",
+                'Per cent of infants born to pregnant women living with HIV who received a virological test for HIV within 2 months of birth': "Reported rate",
+                'Reported number of infants born to pregnant women living with HIV who received a virological test for HIV within 2 months of birth': "Reported number",
+                'Estimated number of children (aged 0-17 years) who have lost one or both parents due to all causes': "Estimated number",
+                'Estimated number of children (aged 0-17 years) who have lost one or both parents due to AIDS': "Estimated number",
+                'Per cent of pregnant women living with HIV receiving lifelong ART': "Reported rate",
+                'Reported number of pregnant women living with HIV receiving lifelong antiretroviral treatment (ART)': "Reported number",
+                'Per cent of pregnant women living with HIV receiving effective ARVs for PMTCT (excludes single-dose nevirapine)': "Reported rate",
+                'Reported number of pregnant woment living with HIV receiving anitretroviral treatments (ARVs) for prevention of mother to child transmission programmes (PMTCT)': "Reported number",
+                'Mother-to-child HIV transmission rate': "Reported rate"
+                },
+        animation_frame='Time period',
+        animation_group='Geographic area',
+        size=df_aggregated[selected_indicator].fillna(0),
         size_max=20,
         projection='natural earth',
     )
     # Remove the legend since some of the column names are too long and will squeeze the size of the map
-    fig.update(layout_coloraxis_showscale=False)
-    fig.update_geos(
+    # fig.update(layout_coloraxis_showscale=False)
+    fig_map.update_geos(
         showcountries=True, countrycolor='whitesmoke',
         showland=True, landcolor='dimgrey',
         showocean=True, oceancolor="Black"
     )
-    fig.update_layout(
-        title=f"{selected_indicator} in {selected_year}",
+    fig_map.update_layout(
+        title=f"{selected_indicator}",
         title_x=0.5,
-        title_font_size=14
+        title_font_size=14,
+        height=650,
+        width=1300
     )
-    return fig
+    return fig_map
 
 # Callback for updating the summary statistics table
 @app.callback(
