@@ -10,7 +10,7 @@ import json
 
 df_aggregated = pd.read_csv("data/processed/dash_clean.csv", index_col=0, low_memory=False)
 
-app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash(__name__, title="HIV Dash", external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
 ## Add dataset and github icon
@@ -145,23 +145,31 @@ app.layout = dbc.Container([
             ])   
         ], label='Indicator Map'),
         ### Third tab
-        dcc.Tab([
-            html.H2('Indicator Summary Statistics'),
+        dbc.Tab([
+            html.H2('Indicator Summary Statistics', style={"textAlign": "center"}),
+            html.Div(id='summary-stats-message', style={'color': 'red', 'marginBottom': '20px'}),  # Message display component
             dbc.Row([
                 dbc.Col([
                     dcc.Dropdown(
                         id='indicator-stats-dropdown',
-                        value=df_aggregated.columns[4],  # Default value is the first indicator column
-                        options=[{'label': col, 'value': col} for col in df_aggregated.columns[4:]], 
+                        value=df_aggregated.columns[3],  # Default value is the first indicator column
+                        options=[{'label': col, 'value': col} for col in df_aggregated.columns[3:]], 
                         placeholder='Choose 1 indicator...'
                     ),
                     dcc.Dropdown(
                         id='country-stats-dropdown',
                         options=[{'label': country, 'value': country} for country in df_aggregated['Geographic area'].unique()],
                         placeholder='Choose up to 10 countries...',
-                        multi=True  # Allow multiple selections, but limit to 2 for the stats comparison
-                    )
+                        multi=True  # Allow multiple selections, but limit to 10 for the stats comparison
+                    ),
                 ]),
+            ]),
+            # Moving the DataTable to be the first element inside the tab, so it grows above the slider
+            dbc.Row([
+                dash_table.DataTable(id='summary-stats-table')
+            ]),
+            # Adding the year slider below the DataTable
+            dbc.Row([
                 dcc.RangeSlider(
                     id='year-stats-slider',
                     min=df_aggregated['Time period'].min(),
@@ -171,12 +179,9 @@ app.layout = dbc.Container([
                     step=1,
                     tooltip={"placement": "bottom", "always_visible": True}
                 )
-            ]),
-            dbc.Row([
-                dash_table.DataTable(id='summary-stats-table')
-            ])
+            ], style={'marginTop': '20px', 'marginBottom': '20px'}),  # Adding space above and extra space below the slider
         ], label='Indicator Summary Statistics')
-    ])    
+    ])
 ], style={'backgroundColor': '#FFFFFF', "color": "#2F3C48"})
 
 ## Callback for the dataset and github icons
@@ -291,16 +296,25 @@ def update_figures(selected_indicator):
 
 # Callback for updating the summary statistics table
 @app.callback(
-    [Output('summary-stats-table', 'data'), Output('summary-stats-table', 'columns')],
+    Output('summary-stats-table', 'data'),
+    Output('summary-stats-table', 'columns'),
+    Output('summary-stats-message', 'children'),  # Assuming you add this component for messages
     [Input('indicator-stats-dropdown', 'value'),
      Input('country-stats-dropdown', 'value'),
      Input('year-stats-slider', 'value')]
 )
 def update_summary_statistics(selected_indicator, selected_countries, selected_years):
-    print("Callback Triggered")  # For debugging, check the console where you run the server
+    print("Callback Triggered")  # For debugging
 
-    if not selected_countries or not selected_indicator or len(selected_countries) > 10:
-        return [], []
+    if not selected_indicator:
+        return [], [], 'Please select an indicator.'
+    
+    if not selected_countries:
+        return [], [], ''
+    
+    if len(selected_countries) > 10:
+        # If more than 10 countries are selected, return a message asking to reduce the selection
+        return [], [], 'Please select only up to 10 countries.'
 
     # Filter based on the selected years and countries
     stats_df = df_aggregated[df_aggregated['Time period'].between(*selected_years)]
@@ -309,6 +323,13 @@ def update_summary_statistics(selected_indicator, selected_countries, selected_y
     # Compute summary statistics
     summary = stats_df.groupby('Geographic area')[selected_indicator].agg(['mean', 'min', 'max', 'count']).reset_index()
 
+    # Check for rows where Non-null Count is 0 and set Mean, Min, Max to 'NULL'
+    for i in summary.index:
+        if summary.at[i, 'count'] == 0:
+            summary.at[i, 'mean'] = 'NULL'
+            summary.at[i, 'min'] = 'NULL'
+            summary.at[i, 'max'] = 'NULL'
+
     # Rename columns for better readability in the DataTable
     summary.columns = ['Geographic area', 'Mean', 'Min', 'Max', 'Non-null Count']
 
@@ -316,7 +337,8 @@ def update_summary_statistics(selected_indicator, selected_countries, selected_y
     data = summary.to_dict('records')
     columns = [{"name": i, "id": i} for i in summary.columns]
 
-    return data, columns
+    # No error message if criteria are met
+    return data, columns, None
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server()
