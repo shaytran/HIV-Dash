@@ -129,7 +129,7 @@ app.layout = dbc.Container([
         ]),
         ### Second tab
         dcc.Tab([
-            html.H2("HIV Indicator map", style={"textAlign": "center"}),
+            html.H2("Global Spread of HIV Indicator", style={"textAlign": "center"}),
             dbc.Row([
                 # Dropdown for selecting indicator
                 dcc.Dropdown(
