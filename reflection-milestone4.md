@@ -8,7 +8,7 @@ Firstly, we enriched the dashboard with more color and illustrative elements, ma
 
 In addition to visual enhancements, we focused on improving functionality and user interaction. This included the implementation of more robust error-catching mechanisms and user prompts within the summary statistics tab, enhancing the dashboard's reliability and user friendliness. By clearly indicating null values and providing more intuitive navigation and data interaction features, we aimed to empower users to explore the data with greater confidence and ease.
 
-We also devoted attention to refining the presentation of our charts and maps. By increasing their size and polishing their design, we sought to facilitate a more immersive data exploration experience. The adjustments to the indicator map and the integration of a functional timeline further contribute to a seamless and informative user journey.
+We also devoted attention to refining the presentation of our charts and maps. By increasing their size and polishing their design, we sought to facilitate a more immersive data exploration experience. The adjustments to the indicator map and the integration of an animated timeline further contribute to a seamless and informative user journey.
 
 While we have made significant strides in enhancing the dashboard, there are areas where further improvements are envisaged. For instance, the extension of our data analysis beyond descriptive statistics to include more in-depth insights remains an area for future development. However, due to the constraints of our current dataset and time limitations, we have prioritized the refinement of existing features. We recognize the value such enhancements would bring and consider them important avenues for future exploration.
 
